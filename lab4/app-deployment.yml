@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  labels:
+    app: lab4
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lab4
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: lab4
+        tier: backend
+    spec:
+      initContainers:
+      - name: init-check
+        image: busybox
+        command: ["sh", "-c", "echo Init completed"]
+
+
+      containers:
+      - name: fastapi
+        image: lab2-fastapi:1.0
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: app-config
+        livenessProbe:
+          httpGet:
+            path: /hello
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10

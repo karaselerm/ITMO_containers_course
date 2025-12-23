@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  labels:
+    app: lab4
+data:
+  POSTGRES_DB: test_db
+  DATABASE_URL: postgresql://test:test@db:5432/test_db

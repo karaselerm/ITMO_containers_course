@@ -1,0 +1,61 @@
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      env_file: .env
+    command: uv run alembic upgrade head # migrate the database to the latest version
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    container_name: lab2-migrate
+    networks:
+      - lab2-network
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    environment:
+      env_file: .env
+    command: uv run uvicorn main:app --host 0.0.0.0 --port 8000
+    container_name: lab2-app
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f  http://127.0.0.1:8000/hello"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - lab2-network
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test_db
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d test_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lab2-network
+
+volumes:
+  postgres_data:
+networks:
+  lab2-network:
+    driver: bridge

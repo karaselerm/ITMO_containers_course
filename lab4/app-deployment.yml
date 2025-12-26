@@ -22,18 +22,30 @@ spec:
         image: busybox
         command: ["sh", "-c", "echo Init completed"]
 
-
       containers:
       - name: fastapi
         image: lab2-fastapi:1.0
         ports:
         - containerPort: 8000
+
         envFrom:
         - configMapRef:
             name: app-config
+        - secretRef:
+            name: db-secret
+
         livenessProbe:
           httpGet:
             path: /hello
             port: 8000
           initialDelaySeconds: 10
           periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /hello
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 3
